@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Robot Navigation Control</title>
+  <style>
+    body { font-family: Arial; margin: 30px; }
+    label { margin-right: 10px; display: inline-block; width: 40px; }
+    input { width: 80px; margin-bottom: 10px; }
+    button { margin-top: 20px; padding: 10px 20px; font-size: 16px; }
+    #response { margin-top: 20px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+
+<h2>Robot Navigation</h2>
+
+<label>X:</label>
+<input id="x" type="number" step="0.1" value="1.0"><br>
+
+<label>Y:</label>
+<input id="y" type="number" step="0.1" value="2.0"><br>
+
+<label>Yaw:</label>
+<input id="yaw" type="number" step="0.1" value="0.0"><br>
+
+<button onclick="sendGoal()">Send Goal</button>
+
+<h3>Response:</h3>
+<pre id="response">No requests</pre>
+
+<script>
+function sendGoal() {
+  const x   = document.getElementById("x").value;
+  const y   = document.getElementById("y").value;
+  const yaw = document.getElementById("yaw").value;
+
+  const url = `http://127.0.0.1:8000/go_to?x=${x}&y=${y}&yaw=${yaw}`;
+
+  // Send Post
+  fetch(url, { method: "POST" })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("response").innerText = JSON.stringify(data, null, 2);
+    })
+    .catch(err => {
+        document.getElementById("response").innerText = "Errore: " + err;
+    });
+}
+</script>
+
+</body>
+</html>

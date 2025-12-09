@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ROS Odom Viewer</title>
+
+  <!-- roslibjs -->
+  <script src="https://cdn.jsdelivr.net/npm/roslib/build/roslib.min.js"></script>
+
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .data-box { margin-top: 20px; }
+  </style>
+</head>
+
+<body>
+
+<h2>Status: <span id="status">Waiting...</span></h2>
+
+<h3>Odometria:</h3>
+<div class="data-box">
+  <p><strong>X:</strong> <span id="odom_x">---</span></p>
+  <p><strong>Y:</strong> <span id="odom_y">---</span></p>
+  <p><strong>Yaw:</strong> <span id="odom_yaw">---</span></p>
+</div>
+
+<script>
+// ------------------------------
+// Connect to rosbridge
+// ------------------------------
+var ros = new ROSLIB.Ros({
+    url : 'ws://127.0.0.1:9090'
+});
+
+ros.on('connection', function() {
+    console.log("CONNECTED");
+    document.getElementById("status").innerText = "Connected!";
+});
+
+ros.on('error', function(error) {
+    console.log("ERROR:", error);
+    document.getElementById("status").innerText = "Error";
+});
+
+ros.on('close', function() {
+    console.log("CLOSED");
+    document.getElementById("status").innerText = "Closed";
+});
+
+// ------------------------------
+// ODOMETRIA SUBSCRIBER
+// ------------------------------
+var odomListener = new ROSLIB.Topic({
+    ros : ros,
+    name : '/odom',
+    messageType : 'nav_msgs/msg/Odometry'
+});
+
+// Convert quaternion to yaw
+function quaternionToYaw(q) {
+    let siny = 2.0 * (q.w * q.z + q.x * q.y);
+    let cosy = 1.0 - 2.0 * (q.y * q.y + q.z * q.z);
+    return Math.atan2(siny, cosy);
+}
+
+// Receive odom messages
+odomListener.subscribe(function(msg) {
+
+    // Position
+    let x = msg.pose.pose.position.x.toFixed(3);
+    let y = msg.pose.pose.position.y.toFixed(3);
+
+    // Orientation → yaw
+    let q = msg.pose.pose.orientation;
+    let yaw = quaternionToYaw(q).toFixed(3);
+
+    // Update HTML
+    document.getElementById("odom_x").innerText = x;
+    document.getElementById("odom_y").innerText = y;
+    document.getElementById("odom_yaw").innerText = yaw;
+
+    console.log("ODOM:", x, y, yaw);
+});
+</script>
+
+</body>
+</html>
